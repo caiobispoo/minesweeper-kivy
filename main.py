@@ -14,8 +14,11 @@ class Tile(Button):
     def __init__(self, grid, **kwargs):
         super(Tile, self).__init__(**kwargs)
         self.text = ''
+        self.row = None
+        self.col = None
         self.flagged = False
         self.disabled = False
+        self.blocked = False
         self.is_mine = False
         self.close_mines = 0
         self.grid = grid
@@ -34,18 +37,21 @@ class Tile(Button):
 
 
     def add_flag(self):
-        if not self.flagged:
+        if not self.flagged and not self.disabled and not self.blocked:
             self.text = 'F'
             self.flagged = True
-        else:
+        elif self.flagged:
             self.text = ''
             self.flagged = False
 
+        self.grid.check_win()
+
 
     def reveal_tile(self):
-        if not self.flagged:
+        if not self.flagged and not self.blocked:
             if self.is_mine:
                 self.text = 'M'
+                self.background_color = [1, 0, 0, 1]
                 self.grid.end_game(lost=True)
             else:
                 if self.close_mines > 0:
@@ -53,7 +59,9 @@ class Tile(Button):
                 else:
                     self.text = ''
                     self.grid.reveal_blank_tiles(self)
-            self.disabled = True
+            if not self.disabled:
+                self.disabled = True
+
             self.grid.check_win()
 
 
@@ -75,6 +83,8 @@ class MineSweeperGrid(GridLayout):
             for col in range(self.cols):
                 tile = Tile(self)
                 self.matrix[row][col] = tile
+                tile.row = row
+                tile.col = col
                 self.add_widget(tile)
         self.place_mines() # Escolhe Tiles aleatórios para terem minas
         self.calculate_mines_around() # Altera o close_mines das minas
@@ -86,7 +96,8 @@ class MineSweeperGrid(GridLayout):
         shuffle(avaible_positions)
 
         for row, col in avaible_positions[:self.num_mines]:
-            self.matrix[row][col].is_mine = True
+            tile = self.matrix[row][col]
+            tile.is_mine = True
 
 
     def calculate_mines_around(self):
@@ -108,56 +119,53 @@ class MineSweeperGrid(GridLayout):
 
 
     def reveal_blank_tiles(self, tile):
-        '''
-        Revela todos os tiles vizinhos que têm close_mines == 0 usando DFS.
-        '''
-        row, col = self.get_tile_position(tile)
+        '''Revela todos os tiles vizinhos que têm close_mines == 0 usando DFS.'''
+        row, col = tile.row, tile.col
 
         # Marca o tile atual como revelado
         tile.disabled = True
         tile.text = ''  # Tiles com close_mines == 0 ficam vazios
 
-        # Itera sobre as células vizinhas
         for i in range(max(0, row - 1), min(row + 2, self.rows)):
             for j in range(max(0, col - 1), min(col + 2, self.cols)):
                 neighbor = self.matrix[i][j]
 
-                # Revela apenas células que não foram reveladas, não são minas e têm close_mines == 0
                 if not neighbor.disabled and not neighbor.is_mine and neighbor.close_mines == 0:
                     self.reveal_blank_tiles(neighbor)  # Chamada recursiva (DFS)
                 elif not neighbor.disabled and not neighbor.is_mine and neighbor.close_mines > 0:
-                    # Revela tiles com close_mines > 0, mas não propaga a revelação
+                    # Revela tiles com close_mines > 0, sem iniciar a recursão
                     neighbor.disabled = True
                     neighbor.text = f'{neighbor.close_mines}'
 
 
-    def get_tile_position(self, tile):
-        '''Obtem as coordenadas de um tile de posição desconhecida'''
-        for row in range(self.rows):
-            for col in range(self.cols):
-                if self.matrix[row][col] == tile:
-                    return row, col
-        return None, None
-
-
     def end_game(self, lost=False):
-        '''Revela todo o grid e desabilita todos os tiles'''
-        for row in range(self.rows):
-            for col in range(self.cols):
-                tile = self.matrix[row][col]
-                if not tile.disabled:
-                    if lost and tile.is_mine:
-                        tile.text = 'M'  # Revela todas as minas em caso de derrota
-                    elif not tile.is_mine:
-                        tile.reveal_tile()  # Revela os tiles que não são minas
-                tile.disabled = True  # Desabilita todos os tiles
-
+        # Não está funcionando corretamente
+        '''Revela todo o grid desabilitando todos os tiles'''
         if lost:
-            print('Você perdeu!')
+            for row in range(self.rows):
+                for col in range(self.cols):
+                    tile = self.matrix[row][col]
+
+                    if tile.is_mine and not tile.disabled:
+                        tile.disabled = True
+                        tile.text = 'M'
+                        # tile.reveal_tile()
+                    else:
+                        tile.blocked = True
+        
         else:
-            print('Você ganhou!')
+            for row in range(self.rows):
+                for col in range(self.cols):
+                    tile = self.matrix[row][col]
+
+                    if tile.is_mine:
+                        tile.text = 'F'
+                        tile.blocked = True
+            # Funcionalidades da vitória
+            print("Você venceu")
 
 
+# mudar o check win
     def check_win(self):
         for row in range(self.rows):
             for col in range(self.cols):
