@@ -1,6 +1,6 @@
-from operator import ne
 from kivymd.app import MDApp
 from kivy.uix.button import Button
+from kivy.lang import Builder
 from kivy.uix.gridlayout import GridLayout
 from kivy.core.window import Window
 from kivy.config import Config
@@ -15,9 +15,9 @@ class Tile(Button):
 
     def __init__(self, grid, **kwargs):
         super(Tile, self).__init__(**kwargs)
-        # Label settings
+        # design settings
         self.text = ''
-        self.font_size = 30
+        self.font_size = 20
         self.font_name = 'fonts/mine-sweeper.ttf'
         self.tile_colors = {
             1: 'dodgerblue',
@@ -29,7 +29,7 @@ class Tile(Button):
             7: 'mediumvioletred',
             8: 'darkgray',
         }
-        # Tile proprieties
+        # Tile properties
         self.row = None
         self.col = None
         self.bold = True
@@ -44,7 +44,8 @@ class Tile(Button):
         # self.disabled_color = (1, 1, 1, 1)
         # self.background_disabled_normal = ''
         # self.background_disabled_down = ''
-        # self.background_color = [0, 0, 0, 1]
+        # self.background_color = 'black'
+        # self.background_normal = ''
 
 
     def on_touch_down(self, touch):
@@ -73,8 +74,8 @@ class Tile(Button):
         if not self.flagged and not self.blocked:
             if self.is_mine:
                 self.text = '*'
-                self.color = 'white'
-                self.background_color = 'red'
+                self.disabled_color = 'red'
+                # self.background_color = 'red'
                 self.disabled = True
                 self.grid.end_game(lost=True)
             else:
@@ -96,10 +97,37 @@ class MineSweeperGrid(GridLayout):
         super(MineSweeperGrid, self).__init__(**kwargs)
         self.cols = 9
         self.rows = 9
-        self.num_mines = 20
+        self.num_mines = 10
+        self.tile_size = 40
         self.matrix = []
         self.create_grid()
         #self.start_timer()
+
+
+    def change_difficulty(self, difficulty):
+        '''Altera a dificuldade do jogo'''
+        
+        self.matrix = []
+        self.clear_widgets()
+
+        if difficulty == 'easy':
+            self.cols = 9
+            self.rows = 9
+            self.num_mines = 10
+        elif difficulty == 'medium':
+            self.cols = 16
+            self.rows = 16
+            self.num_mines = 40
+        elif difficulty == 'hard':
+            self.cols = 32
+            self.rows = 16
+            self.num_mines = 99
+
+        Window.size = (self.cols * self.tile_size, self.rows * self.tile_size)
+
+        # Reinicia o grid com a nova dificuldade
+        
+        self.create_grid()
 
 
     def create_grid(self):
@@ -179,7 +207,8 @@ class MineSweeperGrid(GridLayout):
                     elif tile.is_mine and not tile.flagged and not tile.disabled:
                         tile.disabled = True
                         tile.text = '*'
-                        tile.background_color = 'black'
+                        tile.disabled_color = 'grey'
+                        # tile.background_color = 'black'
                         
                     tile.blocked = True
         
@@ -208,11 +237,9 @@ class MineSweeperGrid(GridLayout):
 
 class MineSweeperApp(MDApp):
     def build(self):
-        Window.size = (640, 640)
-        # Window.clearcolor = 'gray'
-        self.theme_cls_theme_style = 'Dark'
-
-        return MineSweeperGrid()
+        self.theme_cls.theme_style = 'Dark'
+        Window.size = (360, 360)
+        return Builder.load_file('MineSweeper.kv')
 
 
 if __name__ == '__main__':
