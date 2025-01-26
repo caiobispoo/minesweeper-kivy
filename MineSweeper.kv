@@ -1,3 +1,65 @@
 MDBoxLayout:
-    MineSweeperGrid
+    md_bg_color: (0.05, 0.05, 0.05, 1)
+
+    orientation: 'vertical'
+    padding: '10dp'
+    spacing: '10dp'
+
+    MDBoxLayout:
+        #md_bg_color: 'green'
+        orientation: 'horizontal'
+        spacing: '10dp'
+        size_hint: None, None
+        size: self.minimum_size
+        pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+
+        MDButton:
+            size_hint: None, None
+            style: "tonal"
+            radius: [0]
+            theme_bg_color: "Custom"
+            md_bg_color: (0.3, 0.3, 0.3, 1)
+
+
+            on_release: root.ids.grid.change_difficulty('easy')
+            MDButtonText:
+                text: "Easy"
+                bold: True
+                theme_text_color: "Custom"
+                text_color: (0.8, 0.8, 0.8, 1)
+
+
+        MDButton:
+            size_hint: None, None
+            style: "tonal"
+            radius: [0]
+            theme_bg_color: "Custom"
+            md_bg_color: (0.3, 0.3, 0.3, 1)
+
+            on_release: root.ids.grid.change_difficulty('medium')
+            MDButtonText:
+                text: "Medium"
+                bold: True
+                theme_text_color: "Custom"
+                text_color: (0.8, 0.8, 0.8, 1)
+
+        MDButton:
+            size_hint: None, None
+            style: "tonal"
+            radius: [0]
+            theme_bg_color: "Custom"
+            md_bg_color: (0.3, 0.3, 0.3, 1)
+
+            on_release: root.ids.grid.change_difficulty('hard')
+            MDButtonText:
+                text: "Hard"
+                bold: True
+                theme_text_color: "Custom"
+                text_color: (0.8, 0.8, 0.8, 1)
+
+    MineSweeperGrid:
+        id: grid
+
+#root.ids.grid.change_difficulty('hard')
     

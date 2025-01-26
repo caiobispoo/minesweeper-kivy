@@ -9,6 +9,7 @@ from random import shuffle
 
 # os.environ['KIVY_MULTITOUCH'] = '0'
 Config.set('input', 'mouse', 'mouse,disable_multitouch')
+Config.set('graphics', 'fullscreen', '0')
 
 
 class Tile(Button):
@@ -75,7 +76,7 @@ class Tile(Button):
             if self.is_mine:
                 self.text = '*'
                 self.disabled_color = 'red'
-                # self.background_color = 'red'
+                #self.background_color = 'red'
                 self.disabled = True
                 self.grid.end_game(lost=True)
             else:
@@ -124,6 +125,7 @@ class MineSweeperGrid(GridLayout):
             self.num_mines = 99
 
         Window.size = (self.cols * self.tile_size, self.rows * self.tile_size)
+        Window.fullscreen = False # remove
 
         # Reinicia o grid com a nova dificuldade
         
@@ -239,6 +241,7 @@ class MineSweeperApp(MDApp):
     def build(self):
         self.theme_cls.theme_style = 'Dark'
         Window.size = (360, 360)
+        Window.fullscreen = False # remove
         return Builder.load_file('MineSweeper.kv')
 
 
