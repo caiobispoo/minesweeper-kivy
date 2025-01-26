@@ -124,7 +124,7 @@ class MineSweeperGrid(GridLayout):
             self.rows = 16
             self.num_mines = 99
 
-        Window.size = (self.cols * self.tile_size, self.rows * self.tile_size)
+        Window.size = (self.cols * self.tile_size, self.rows * self.tile_size + 50)
         Window.fullscreen = False # remove
 
         # Reinicia o grid com a nova dificuldade
@@ -240,7 +240,7 @@ class MineSweeperGrid(GridLayout):
 class MineSweeperApp(MDApp):
     def build(self):
         self.theme_cls.theme_style = 'Dark'
-        Window.size = (360, 360)
+        Window.size = (360, 360 + 50)
         Window.fullscreen = False # remove
         return Builder.load_file('MineSweeper.kv')
 
