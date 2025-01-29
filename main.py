@@ -1,15 +1,99 @@
 from kivymd.app import MDApp
-from kivy.uix.button import Button
 from kivy.lang import Builder
-from kivy.uix.gridlayout import GridLayout
-from kivy.core.window import Window
 from kivy.config import Config
+from kivy.core.window import Window
+from kivy.uix.button import Button
+from kivy.uix.gridlayout import GridLayout
+from kivy.properties import NumericProperty, StringProperty
 from random import shuffle
-# import os
 
-# os.environ['KIVY_MULTITOUCH'] = '0'
+
 Config.set('input', 'mouse', 'mouse,disable_multitouch')
-Config.set('graphics', 'fullscreen', '0')
+
+
+kv = '''
+MDBoxLayout:
+    md_bg_color: (0.05, 0.05, 0.05, 1)
+
+    orientation: 'vertical'
+    padding: '10dp'
+    spacing: '10dp'
+
+    MDBoxLayout:
+        #md_bg_color: 'green'
+        orientation: 'horizontal'
+        spacing: '10dp'
+        size_hint: None, None
+        size: self.minimum_size
+        pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+
+        MDButton:
+            size_hint: None, None
+            style: 'tonal'
+            radius: [5]
+            theme_bg_color: 'Custom'
+            md_bg_color: (0.3, 0.3, 0.3, 1)
+            on_release: root.ids.grid.change_difficulty('easy')
+
+            MDButtonText:
+                text: 'Easy'
+                bold: True
+                theme_text_color: 'Custom'
+                text_color: (0.8, 0.8, 0.8, 1)
+
+
+        MDButton:
+            size_hint: None, None
+            style: 'tonal'
+            radius: [5]
+            theme_bg_color: 'Custom'
+            md_bg_color: (0.3, 0.3, 0.3, 1)
+            on_release: root.ids.grid.change_difficulty('medium')
+
+            MDButtonText:
+                text: 'Medium'
+                bold: True
+                theme_text_color: 'Custom'
+                text_color: (0.8, 0.8, 0.8, 1)
+
+
+        MDButton:
+            size_hint: None, None
+            style: 'tonal'
+            radius: [5]
+            theme_bg_color: 'Custom'
+            md_bg_color: (0.3, 0.3, 0.3, 1)
+            on_release: root.ids.grid.change_difficulty('hard')
+
+            MDButtonText:
+                text: 'Hard'
+                bold: True
+                theme_text_color: 'Custom'
+                text_color: (0.8, 0.8, 0.8, 1)
+
+
+    MDBoxLayout:
+        id: bg_count
+        size_hint: None, None
+        size: 60, 40
+        pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+        padding: '10dp'
+        theme_bg_color: 'Custom'
+        md_bg_color: (0.4, 0.4, 0.4, 1)
+
+        Label:
+            id: mine_count
+            text: root.ids.grid.mine_count_str
+            font_size: 32
+            bold: True
+            theme_text_color: 'Custom'
+            text_color: 'red'
+
+
+    MineSweeperGrid:
+        id: grid
+'''
 
 
 class Tile(Button):
@@ -20,7 +104,7 @@ class Tile(Button):
         self.text = ''
         self.font_size = 20
         self.font_name = 'fonts/mine-sweeper.ttf'
-        self.tile_colors = {
+        self.font_colors = {
             1: 'dodgerblue',
             2: 'green',
             3: 'red',
@@ -30,7 +114,6 @@ class Tile(Button):
             7: 'mediumvioletred',
             8: 'darkgray',
         }
-        # Tile properties
         self.row = None
         self.col = None
         self.bold = True
@@ -39,14 +122,7 @@ class Tile(Button):
         self.blocked = False
         self.is_mine = False
         self.close_mines = 0
-        # GameGrid
         self.grid = grid
-        # Desing settings
-        # self.disabled_color = (1, 1, 1, 1)
-        # self.background_disabled_normal = ''
-        # self.background_disabled_down = ''
-        # self.background_color = 'black'
-        # self.background_normal = ''
 
 
     def on_touch_down(self, touch):
@@ -63,9 +139,13 @@ class Tile(Button):
     def add_flag(self):
         if not self.flagged and not self.disabled and not self.blocked:
             self.text = '`'
+            self.grid.mine_count -= 1
+            self.grid.mine_count_str = f'{self.grid.mine_count:02}'
             self.flagged = True
         elif self.flagged:
             self.text = ''
+            self.grid.mine_count += 1
+            self.grid.mine_count_str = f'{self.grid.mine_count:02}'
             self.flagged = False
 
         self.grid.check_win()
@@ -76,14 +156,13 @@ class Tile(Button):
             if self.is_mine:
                 self.text = '*'
                 self.disabled_color = 'red'
-                #self.background_color = 'red'
                 self.disabled = True
                 self.grid.end_game(lost=True)
             else:
                 if self.close_mines > 0:
                     number = self.close_mines
                     self.text = f'{number}'
-                    self.disabled_color = self.tile_colors.get(number, 'white')
+                    self.disabled_color = self.font_colors.get(number, 'white')
                 else:
                     self.text = ''
                     self.grid.reveal_blank_tiles(self)
@@ -94,21 +173,31 @@ class Tile(Button):
 
 
 class MineSweeperGrid(GridLayout):
+    mine_count = NumericProperty(0)
+    mine_count_str = StringProperty('00')
+
     def __init__(self, **kwargs):
         super(MineSweeperGrid, self).__init__(**kwargs)
         self.cols = 9
         self.rows = 9
         self.num_mines = 10
+        self.mine_count = self.num_mines
+        self.mine_count_str = f'{self.mine_count:02}'
         self.tile_size = 40
         self.matrix = []
         self.create_grid()
-        #self.start_timer()
+
+    def show_zero_tile(self):
+        for row in range(self.rows):
+            for col in range(self.cols):
+                tile = self.matrix[row][col]
+                if tile.close_mines == 0 and not tile.is_mine:
+                    tile.text = '0'
 
 
     def change_difficulty(self, difficulty):
         '''Altera a dificuldade do jogo'''
         
-        self.matrix = []
         self.clear_widgets()
 
         if difficulty == 'easy':
@@ -124,16 +213,16 @@ class MineSweeperGrid(GridLayout):
             self.rows = 16
             self.num_mines = 99
 
-        Window.size = (self.cols * self.tile_size, self.rows * self.tile_size + 50)
-        Window.fullscreen = False # remove
+        self.mine_count = self.num_mines
+        self.mine_count_str = f'{self.mine_count:02}'
+        Window.size = (self.cols * self.tile_size, self.rows * self.tile_size + 90)
 
-        # Reinicia o grid com a nova dificuldade
-        
         self.create_grid()
 
 
     def create_grid(self):
         '''Cria o grid e também a matrix que representa o grid'''
+
         self.matrix = [[None for _ in range(self.cols)] for _ in range(self.rows)]
         for row in range(self.rows):
             for col in range(self.cols):
@@ -142,12 +231,15 @@ class MineSweeperGrid(GridLayout):
                 tile.row = row
                 tile.col = col
                 self.add_widget(tile)
-        self.place_mines() # Escolhe Tiles aleatórios para terem minas
-        self.calculate_mines_around() # Altera o close_mines das minas
+        
+        self.place_mines()
+        self.calculate_mines_around()
+        # self.show_zero_tile()
 
 
     def place_mines(self):
         '''Escolhe aleatoriamente quais os botões que terão minas'''
+
         avaible_positions = [(row, col) for row in range(self.rows) for col in range(self.cols)]
         shuffle(avaible_positions)
 
@@ -158,6 +250,7 @@ class MineSweeperGrid(GridLayout):
 
     def calculate_mines_around(self):
         '''Altera o valor de close_mines do Tile'''
+
         for row in range(self.rows):
             for col in range(self.cols):
                 if not self.matrix[row][col].is_mine:
@@ -166,6 +259,7 @@ class MineSweeperGrid(GridLayout):
 
     def count_mines_around(self, row, col):
         '''Calcula o total de minas ao redor de algum Tile'''
+
         count = 0
         for i in range(max(0, row - 1), min(row + 2, self.rows)):
             for j in range(max(0, col - 1), min(col + 2, self.cols)):
@@ -178,60 +272,63 @@ class MineSweeperGrid(GridLayout):
         '''Revela todos os tiles vizinhos que têm close_mines == 0 usando DFS.'''
         row, col = tile.row, tile.col
 
-        # Marca o tile atual como revelado
+        if tile.flagged:
+            self.mine_count += 1
+            self.mine_count_str = f'{self.mine_count:02}'
+            tile.flagged = False  
+
         tile.disabled = True
-        tile.text = ''  # Tiles com close_mines == 0 ficam vazios
+        tile.text = ''
 
         for i in range(max(0, row - 1), min(row + 2, self.rows)):
             for j in range(max(0, col - 1), min(col + 2, self.cols)):
                 neighbor = self.matrix[i][j]
 
                 if not neighbor.disabled and not neighbor.is_mine and neighbor.close_mines == 0:
-                    self.reveal_blank_tiles(neighbor)  # Chamada recursiva (DFS)
+                    self.reveal_blank_tiles(neighbor)
+
                 elif not neighbor.disabled and not neighbor.is_mine and neighbor.close_mines > 0:
-                    # Revela tiles com close_mines > 0, sem iniciar a recursão
                     neighbor.disabled = True
                     neighbor.text = f'{neighbor.close_mines}'
-                    neighbor.disabled_color = neighbor.tile_colors.get(neighbor.close_mines, 'white')
+                    neighbor.disabled_color = neighbor.font_colors.get(neighbor.close_mines, 'white')
+
+                    if neighbor.flagged and not neighbor.is_mine:
+                        self.mine_count += 1
+                        self.mine_count_str = f'{self.mine_count:02}'
+                        neighbor.flagged = False 
 
 
     def end_game(self, lost=False):
-        # Não está funcionando corretamente
         '''Revela todo o grid desabilitando todos os tiles'''
-        if lost:
-            for row in range(self.rows):
-                for col in range(self.cols):
-                    tile = self.matrix[row][col]
 
+        for row in range(self.rows):
+            for col in range(self.cols):
+                tile = self.matrix[row][col]
+                if lost:
                     if not tile.is_mine and tile.flagged:
                         tile.background_color = 'red'
-                        
                     elif tile.is_mine and not tile.flagged and not tile.disabled:
                         tile.disabled = True
                         tile.text = '*'
                         tile.disabled_color = 'grey'
-                        # tile.background_color = 'black'
-                        
                     tile.blocked = True
-        
-        else:
-            for row in range(self.rows):
-                for col in range(self.cols):
-                    tile = self.matrix[row][col]
-
-                    if tile.is_mine:
+                else:
+                    if tile.is_mine and not tile.flagged:
                         tile.text = '`'
+                        self.mine_count -= 1
+                        self.mine_count_str = f'{self.mine_count:02}'
                         tile.blocked = True
-            # Funcionalidades da vitória
-            print("Você venceu")
+
+        if lost:
+            print('Você perdeu')
+        else:
+            print('Você venceu')
 
 
-# mudar o check win
     def check_win(self):
         for row in range(self.rows):
             for col in range(self.cols):
                 tile = self.matrix[row][col]
-                # verificar condição de vitória
                 if not tile.is_mine and not tile.disabled:
                     return None
         self.end_game(lost=False)
@@ -240,9 +337,8 @@ class MineSweeperGrid(GridLayout):
 class MineSweeperApp(MDApp):
     def build(self):
         self.theme_cls.theme_style = 'Dark'
-        Window.size = (360, 360 + 50)
-        Window.fullscreen = False # remove
-        return Builder.load_file('MineSweeper.kv')
+        Window.size = (360, 360 + 90)
+        return Builder.load_string(kv)
 
 
 if __name__ == '__main__':
