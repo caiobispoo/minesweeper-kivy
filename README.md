@@ -17,7 +17,7 @@ Pré-requisitos
 
 ## Clone o repositório:
 ```
-    git clone https://github.com/seu-usuario/MineSweeper.git
+    git clone https://github.com/caiobispoo/minesweeper-kivy.git
     cd MineSweeper
 ```
 ## Crie e ative um ambiente virtual (opcional, mas recomendado):
