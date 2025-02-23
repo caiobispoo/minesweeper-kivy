@@ -18,7 +18,7 @@ Pré-requisitos
 ## Clone o repositório:
 ```
     git clone https://github.com/caiobispoo/minesweeper-kivy.git
-    cd MineSweeper
+    cd minesweeper-kivy
 ```
 ## Crie e ative um ambiente virtual (opcional, mas recomendado):
 
@@ -31,7 +31,7 @@ Pré-requisitos
 - No macOS/Linux:
 ```
 python3 -m venv venv
-source venv/bin/activate
+. venv/bin/activate
 ```
 
 ## Instale as dependências do projeto:
