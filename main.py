@@ -7,7 +7,6 @@ from kivymd.uix.dialog import (
     MDDialog,
     MDDialogHeadlineText,
     MDDialogSupportingText,
-    MDDialogButtonContainer,
 )
 from kivy.lang import Builder
 from kivy.config import Config
@@ -131,7 +130,7 @@ class Tile(Button):
         self.disabled = False
         self.blocked = False
         self.is_mine = False
-        self.close_mines = 0
+        self.nearby_mines = 0
         self.grid = grid
 
 
@@ -173,8 +172,8 @@ class Tile(Button):
                 self.disabled = True
                 self.grid.end_game(lost=True)
             else:
-                if self.close_mines > 0:
-                    number = self.close_mines
+                if self.nearby_mines > 0:
+                    number = self.nearby_mines
                     self.text = f'{number}'
                     self.disabled_color = self.font_colors.get(number, 'white')
                 else:
@@ -207,7 +206,7 @@ class MineSweeperGrid(GridLayout):
         for row in range(self.rows):
             for col in range(self.cols):
                 tile = self.matrix[row][col]
-                if tile.close_mines == 0 and not tile.is_mine:
+                if tile.nearby_mines == 0 and not tile.is_mine:
                     tile.text = '0'
 
 
@@ -249,7 +248,7 @@ class MineSweeperGrid(GridLayout):
                 self.add_widget(tile)
         
         self.place_mines()
-        self.calculate_mines_around()
+        self.set_nearby_mines()
         # self.show_zero_tile()
 
 
@@ -264,16 +263,16 @@ class MineSweeperGrid(GridLayout):
             tile.is_mine = True
 
 
-    def calculate_mines_around(self):
-        '''Altera o valor de close_mines do Tile.'''
+    def set_nearby_mines(self):
+        '''Altera o valor de nearby_mines do Tile.'''
 
         for row in range(self.rows):
             for col in range(self.cols):
                 if not self.matrix[row][col].is_mine:
-                    self.matrix[row][col].close_mines = self.count_mines_around(row, col)
+                    self.matrix[row][col].nearby_mines = self.count_nearby_mines(row, col)
 
 
-    def count_mines_around(self, row, col):
+    def count_nearby_mines(self, row, col):
         '''Calcula o total de minas ao redor de algum Tile'''
 
         count = 0
@@ -285,7 +284,7 @@ class MineSweeperGrid(GridLayout):
 
 
     def reveal_blank_tiles(self, tile):
-        '''Revela todos os tiles vizinhos que têm close_mines == 0 usando DFS.'''
+        '''Revela todos os tiles vizinhos que têm nearby_mines == 0 usando DFS.'''
 
         row, col = tile.row, tile.col
 
@@ -301,18 +300,29 @@ class MineSweeperGrid(GridLayout):
             for j in range(max(0, col - 1), min(col + 2, self.cols)):
                 neighbor = self.matrix[i][j]
 
-                if not neighbor.disabled and not neighbor.is_mine and neighbor.close_mines == 0:
+                if not neighbor.disabled and not neighbor.is_mine and neighbor.nearby_mines == 0:
                     self.reveal_blank_tiles(neighbor)
 
-                elif not neighbor.disabled and not neighbor.is_mine and neighbor.close_mines > 0:
+                elif not neighbor.disabled and not neighbor.is_mine and neighbor.nearby_mines > 0:
                     neighbor.disabled = True
-                    neighbor.text = f'{neighbor.close_mines}'
-                    neighbor.disabled_color = neighbor.font_colors.get(neighbor.close_mines, 'white')
+                    neighbor.text = f'{neighbor.nearby_mines}'
+                    neighbor.disabled_color = neighbor.font_colors.get(neighbor.nearby_mines, 'white')
 
                     if neighbor.flagged and not neighbor.is_mine:
                         self.mine_count += 1
                         self.mine_count_str = f'{self.mine_count:02}'
                         neighbor.flagged = False 
+
+
+    def check_win(self):
+        '''Verifica que o jogador está em condição de vitória.'''
+
+        for row in range(self.rows):
+            for col in range(self.cols):
+                tile = self.matrix[row][col]
+                if not tile.is_mine and not tile.disabled:
+                    return None
+        self.end_game(lost=False)
 
 
     def end_game(self, lost=False):
@@ -346,7 +356,6 @@ class MineSweeperGrid(GridLayout):
                     text = 'Selecione uma dificuldade para iniciar uma nova partida.',
                 ),
                 style = 'outlined',
-                line_color = 'blue',
             ).open()
 
         else:
@@ -359,19 +368,7 @@ class MineSweeperGrid(GridLayout):
                     text = 'Parabéns, para iniciar uma nova partida selecione uma dificuldade.',
                 ),
                 style = 'outlined',
-                line_color = 'blue',
             ).open()
-
-
-    def check_win(self):
-        '''Verifica que o jogador está em condição de vitória.'''
-
-        for row in range(self.rows):
-            for col in range(self.cols):
-                tile = self.matrix[row][col]
-                if not tile.is_mine and not tile.disabled:
-                    return None
-        self.end_game(lost=False)
 
 
 class MineSweeperApp(MDApp):
