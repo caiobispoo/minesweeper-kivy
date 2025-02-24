@@ -43,6 +43,12 @@ pip install .
 
 Isso instalará automaticamente o Kivy, o KivyMD e outras dependências listadas no pyproject.toml.
 
+- No Windows:
 ```
 python main.py
+```
+
+- No macOS/Linux:
+```
+python3 main.py
 ```
