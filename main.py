@@ -153,13 +153,11 @@ class Tile(Button):
             self.grid.mine_count -= 1
             self.grid.mine_count_str = f'{self.grid.mine_count:02}'
             self.flagged = True
-        elif self.flagged:
+        elif self.flagged and not self.blocked:
             self.text = ''
             self.grid.mine_count += 1
             self.grid.mine_count_str = f'{self.grid.mine_count:02}'
             self.flagged = False
-
-        self.grid.check_win()
 
 
     def reveal_tile(self):
@@ -236,7 +234,7 @@ class MineSweeperGrid(GridLayout):
 
 
     def create_grid(self):
-        '''Cria o grid e sua matriz.'''
+        '''Cria a matriz, posiciona as minas e adiciona os números.'''
 
         self.matrix = [[None for _ in range(self.cols)] for _ in range(self.rows)]
         for row in range(self.rows):
@@ -264,7 +262,7 @@ class MineSweeperGrid(GridLayout):
 
 
     def set_nearby_mines(self):
-        '''Altera o valor de nearby_mines do Tile.'''
+        '''Altera o valor de nearby_mines de todos os objetos Tile.'''
 
         for row in range(self.rows):
             for col in range(self.cols):
@@ -273,7 +271,7 @@ class MineSweeperGrid(GridLayout):
 
 
     def count_nearby_mines(self, row, col):
-        '''Calcula o total de minas ao redor de algum Tile'''
+        '''Calcula o total de minas ao redor de algum botão.'''
 
         count = 0
         for i in range(max(0, row - 1), min(row + 2, self.rows)):
@@ -284,7 +282,7 @@ class MineSweeperGrid(GridLayout):
 
 
     def reveal_blank_tiles(self, tile):
-        '''Revela todos os tiles vizinhos que têm nearby_mines == 0 usando DFS.'''
+        '''Revela todos os botões vizinhos que têm nearby_mines == 0 usando DFS.'''
 
         row, col = tile.row, tile.col
 
@@ -315,7 +313,7 @@ class MineSweeperGrid(GridLayout):
 
 
     def check_win(self):
-        '''Verifica que o jogador está em condição de vitória.'''
+        '''Verifica se os únicos tiles que não estão desabilitados são minas.'''
 
         for row in range(self.rows):
             for col in range(self.cols):
@@ -380,4 +378,3 @@ class MineSweeperApp(MDApp):
 
 if __name__ == '__main__':
     MineSweeperApp().run()
-
