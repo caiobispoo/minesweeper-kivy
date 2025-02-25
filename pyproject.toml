@@ -1,5 +1,6 @@
 [project]
 name = "minesweeper-kivy"
+version = "0.0.4"
 description = "A minesweeper game builded on kivy"
 readme = "README.md"
 requires-python = ">=3.10"
