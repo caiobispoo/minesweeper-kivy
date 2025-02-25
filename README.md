@@ -45,7 +45,7 @@ Isso instalará automaticamente o Kivy, o KivyMD e outras dependências listadas
 
 - No Windows:
 ```
-python main.py
+python .\main.py
 ```
 
 - No macOS/Linux:
